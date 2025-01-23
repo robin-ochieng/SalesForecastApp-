@@ -1,0 +1,265 @@
+/* custom_styles.css */
+/* Apply the Mulish font to the entire body of the app */
+body {
+    font-family: 'Mulish', sans-serif; /* Use the Mulish font for all text */
+    background-color: #f4f4f4; /* Optional: set a background color */
+}
+
+/* General style for buttons used in the control bar */
+.btn-primary {
+    background-color: #007bff; /* Set button background color to primary blue */
+    color: white; /* Set button text color to white */
+    font-size: 16px; /* Set font size to 16px */
+}
+
+/* Style for the cards in the app body */
+.card-custom {
+    background-color: #ffffff; /* Set the background color for the card */
+    padding: 20px; /* Add padding inside the card */
+    border-radius: 10px; /* Round the corners of the card */
+    color: black; /* Set the text color to white */
+    margin-bottom: 20px; /* Add space below the card */
+}
+
+/* Ensure that selectInput elements inside .card-custom have appropriate styles */
+.card-custom select {
+    background-color: white; /* Set the background of the select input to white */
+    color: #0137A6; /* Set the text color to black */
+    border: 1px solid #ccc; /* Add a border */
+    border-radius: 4px; /* Slightly rounded corners */
+    font-size: 14px; /* Set font size */
+    padding: 5px; /* Add some padding for better appearance */
+    width: 100%; /* Make the select input take full width of its container */
+}
+
+/* Optional: Adjust label color inside .card-custom if needed */
+.card-custom label {
+    color: #0137A6; /* Keep labels white to contrast with the blue background */
+}
+
+/* Style for the error messages in Shiny */
+.shiny-output-error {
+    color: #ff0000; /* Set error message color to red */
+}
+
+/* Prefix the error message with "Error: " */
+.shiny-output-error:before {
+    content: 'Error: ';
+}
+
+/* Style for the well panel */
+.well {
+    background-color: #ffffff; /* Set the background color of the well panel */
+    border-radius: 8px; /* Round the corners of the well panel */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Add a subtle shadow for depth */
+}
+
+.control-bar {
+    position: absolute;
+    right: 0; 
+    top: 50%; 
+    transform: translateY(-50%);
+  }
+  
+.control-button {
+    font-size: 14px;
+    margin-right: 10px; 
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white; ;
+  }
+
+  /* custom_styles.css */
+  .sidebar-logo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 70px;
+    text-align: centre;
+    padding: 5px 0; /* Add padding to give some space around the logo */
+    background-color: #fff; /* Light background color to distinguish the logo area */
+    z-index: 1050;
+}
+  
+  .sidebar-logo img {
+    height: 60px; /* Adjust the height of the logo as needed */
+    max-width: 100%; /* Ensure the logo scales within the container */
+    background-color: #ffffff; /* Optional: Add a background behind the logo */
+    border-radius: 8px; /* Optional: Add rounded corners for a modern look */
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for a more professional look */
+    padding: 10px; /* Optional: Add a slight shadow around the logo */
+  }
+
+
+  /* Set the background color of the sidebar */
+.main-sidebar {
+    background-color: #fff !important;  /* Apply the desired color */
+    box-shadow: none !important;
+    padding-top: 80px;
+  }
+  
+/* Style container to remove list style and position correctly */
+.header-title-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Align items to the start of the container */
+    margin-left: 0; /* Match the sidebar width */
+    position: relative; /* Ensure the container is positioned correctly */
+    width: 220px; /* Match the width of the sidebar-footer */
+    padding: 8px 12px; /* Add padding to give some space around the title */
+    margin-top: 10px;  
+    background-color: #fff; /* Light background color to distinguish the title area */
+    border-radius: 6px; /* Optional: Add rounded corners for a modern look */
+    border: 1px solid #595959; 
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25); /* Subtle shadow for a more professional look */
+
+}
+
+/* Style for the header title */
+.header-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #000000;
+    padding-left: 5px; /* Space after the vertical line */
+}
+
+/* Footer styling */
+.body-footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #f4f2ee;
+    color: #0137A6;
+    text-align: center;
+    padding: 10px;
+    z-index: 1030;
+}
+
+
+/* Sidebar Items ----------------------------------------------------------------------------------*/
+.menu-container {
+    display: block; /* Align items to the start of the container */
+    position: fixed; /* Ensure the container is positioned correctly */    
+    top: 200px;  /* Aligns to the top of the viewport */
+    left: 0; 
+    width: 250px; /* Match the width of the sidebar-footer */
+    padding: 10px 5px; /* Add padding to give some space around the title */
+    background-color: #fff; /* Light background color to distinguish the title area */
+    border-radius: 8px; /* Optional: Add rounded corners for a modern look */
+    font-family: 'Mulish', sans-serif;
+    z-index: 1050;
+    overflow: auto;
+}
+
+
+
+
+/* ------------------------------------------------------------------------------------------- */
+  
+/* -------------Button styling------------------------------------------------------------------------------ */
+
+/* Target the menu item text in the sidebar */
+.nav-sidebar .nav-item > .nav-link > p {
+  font-size: 14px !important;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------- */
+.btn-primary-custom-show-instructions {
+  background-color: white;
+  color: #0137A6;
+  font-size: 12px;
+  padding: 8px 16px;         /* Top/bottom and left/right padding */
+  border: 1px solid #0137A6;
+  border-radius: 5px;         /* Rounded corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+  transition: all 0.3s ease;  /* Smooth transition for all changes */
+}
+
+.btn-primary-custom-show-instructions:hover {
+  background-color: white;  /* Slightly darker blue on hover */
+  color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* More prominent shadow on hover */
+}
+
+/* Remove default list styling from <li> elements, if needed */
+.clock-container {
+  list-style-type: none;
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;  /* Positions the clock on the far right */
+  align-items: center;
+  margin-right: 10px;         /* Adjust spacing as desired */
+}
+
+/* Style the clock text */
+#dynamic-clock {
+  font-size: 12px;
+  color: #000000;
+  border: 1px solid #000000;
+  padding: 8px 16px;
+  border-radius: 5px;
+}
+
+.control-button {
+  font-size: 14px;
+  margin-right: 10px; 
+  margin-left: 10px; 
+  background-color: white;
+  color: #0137A6; 
+  border: 1px solid #0137A6; 
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.highlight-effect {
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+.highlight-effect:hover {
+  border: 1px solid #0137A6 !important;  /* a highlight color */
+  box-shadow: 0 0 10px rgba(1, 55, 166, 0.5);
+  cursor: pointer;
+}
+
+
+/* Example: change the background color of the tooltip */
+.introjs-tooltip {
+  background-color: #f5f7fa;
+  color: #333;
+}
+
+/* Example: adjust the highlight overlay color */
+.introjs-fixedTooltip, .introjs-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* ============= VALUE BOX HOVER EFFECT ============== */
+/* bs4Dash typically uses .small-box for value boxes, 
+   but you may see .value-box in older references. */
+   .small-box:hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transform: scale(1.02);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    cursor: pointer; /* Optional: shows a pointer to emphasize interactivity */
+  }
+  
+  /* ============= BS4CARD / BOX HOVER EFFECT ============== */
+  /* For the standard bs4Dash cards. 
+     If you're using <bs4Card>, they get the .bs4Card class. */
+  .bs4Card:hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    cursor: pointer; /* Optional */
+  }
+  
+
+
+
+
+
+
+
+
+
+

@@ -53,9 +53,6 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       X <- dplyr::select(trainDF, -Sales)
       y <- trainDF$Sales
 
-      message("=== Training Columns ===")
-      print(names(X))
-
       # Train CatBoost (example)
       pool <- catboost.load_pool(data = X, label = y)
       fit <- catboost.train(pool, NULL,
@@ -142,9 +139,6 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       # Then subset future_data (which we just created) to these columns
       # We do NOT include "Sales" here because that's the target in training.
       future_data_final <- future_data[, predCols, drop = FALSE]
-      
-      message("=== Prediction Columns ===")
-      print(names(future_data_final))
 
       # Predict
       cat_model <- model()

@@ -73,7 +73,16 @@ ui <- dashboardPage(
     sidebarMenu(
     dateInput("startDate", "Select Forecast start date:",value = Sys.Date() , min = Sys.Date()),
     dateInput("endDate", "Select Forecast end date:", value = Sys.Date()+ days(7), min = Sys.Date()),
-    tags$h6("Forecast Method:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"), 
+    # DROPDOWN for model selection
+    selectInput(
+      inputId  = "modelChoice",
+      label    = "Select Model:",
+      choices  = c("CatBoost", "XGBoost"),
+      selected = "XGBoost"
+    ), 
+    
+    tags$h6("Forecast Method:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"),
+    # SwitchButton for Forecast Type selection
     switchInput(
       inputId = "forecastType", 
       label = NULL, 
@@ -87,7 +96,7 @@ ui <- dashboardPage(
       #forecastType .switch-input {
         width: 200px;  # Increase width as needed
       }
-    "))   
+    ")) 
      )
     )
   ),
@@ -126,7 +135,8 @@ server <- function(input, output, session) {
     dailySalesReactive = dailySalesRV,
     startDateReactive = reactive({ input$startDate }),
     endDateReactive   = reactive({ input$endDate }),
-    forecastTypeReactive = reactive({ input$forecastType })
+    forecastTypeReactive = reactive({ input$forecastType }),
+    modelChoiceReactive  = reactive({ input$modelChoice }) 
     )
 
   # 3) Module for Our Value boxes

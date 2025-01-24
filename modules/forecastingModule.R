@@ -1,5 +1,5 @@
 # forecastingModule.R
-modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDateReactive, forecastTypeReactive) {
+modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDateReactive, forecastTypeReactive, modelChoiceReactive) {
   moduleServer(id, function(input, output, session) {
     
     # 1) Train XGBoost model once, using the daily_sales data from module 1
@@ -53,6 +53,9 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       X <- dplyr::select(trainDF, -Sales)
       y <- trainDF$Sales
 
+       # -- B) Check which model user chose
+      if (modelChoiceReactive() == "CatBoost") {     
+
       # Train CatBoost (example)
       pool <- catboost.load_pool(data = X, label = y)
       fit <- catboost.train(pool, NULL,
@@ -64,6 +67,19 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         )
       )
       fit
+    } else {
+        # XGBoost pipeline
+        fit <- xgboost::xgboost(
+          data        = as.matrix(X),
+          label       = y,
+          nrounds     = 1000,
+          objective   = "reg:squarederror",
+          max_depth   = 5,
+          eta         = 0.1,
+          verbose     = 0
+        )
+        fit
+      }
     })
 
     ################
@@ -139,11 +155,20 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       # Then subset future_data (which we just created) to these columns
       # We do NOT include "Sales" here because that's the target in training.
       future_data_final <- future_data[, predCols, drop = FALSE]
+      
+      # E) Use whichever model is trained
+      finalModel <- model()
 
       # Predict
-      cat_model <- model()
-      future_pool <- catboost.load_pool(data = future_data_final)
-      preds <- catboost.predict(cat_model, future_pool)
+      # If it's CatBoost
+      if (modelChoiceReactive() == "CatBoost") {
+        pool <- catboost.load_pool(data = future_data_final)
+        preds <- catboost.predict(finalModel, pool)
+        
+      } else {
+        # XGBoost
+        preds <- predict(finalModel, as.matrix(future_data_final))
+      }
       
       # Return a data frame with a single final column name "PredictedSales"
       data.frame(

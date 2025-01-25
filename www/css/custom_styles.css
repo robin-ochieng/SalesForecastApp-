@@ -253,6 +253,14 @@ body {
     cursor: pointer; /* Optional */
   }
   
+  .highlight-effect {
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+  }
+  .highlight-effect:hover {
+    border: 1px solid #0137A6 !important;  /* a highlight color */
+    box-shadow: 0 0 10px rgba(1, 55, 166, 0.5);
+    cursor: pointer;
+  }
 
 
 

@@ -5,6 +5,8 @@ library(tidyverse)
 library(lubridate)
 library(readr)
 library(catboost)
+library(xgboost)
+library(lightgbm)
 library(caret)
 library(imputeTS)
 library(scales)
@@ -77,7 +79,7 @@ ui <- dashboardPage(
     selectInput(
       inputId  = "modelChoice",
       label    = "Select Model:",
-      choices  = c("CatBoost", "XGBoost"),
+      choices  = c("CatBoost", "XGBoost", "LightGBM"),
       selected = "XGBoost"
     ), 
     

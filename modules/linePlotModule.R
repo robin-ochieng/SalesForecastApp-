@@ -8,7 +8,7 @@ LinePlotUI <- function(id) {
         status = "white",
         solidHeader = TRUE,
         width = 12,
-        plotlyOutput(ns("linePlot"))
+        plotlyOutput(ns("linePlot")) %>% withSpinner(type = 5)
       )
 }
 
@@ -35,7 +35,7 @@ LinePlotServer <- function(id, forecastData, forecastTypeReactive) {
         text = ~format(round(PredictedSales), big.mark = ",", scientific = FALSE),
         textposition = 'top center',
         line = list(color = '#8E8E8E'),
-        marker = list(color = '#525252')
+        marker = list(color = '#8E8E8E')
       ) %>%
       layout(
         title = "",

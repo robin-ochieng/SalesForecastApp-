@@ -3,6 +3,7 @@
 LinePlotUI <- function(id) {
   ns <- NS(id)
     bs4Card(
+        class = "highlight-effect",
         title = "Predicted Sales by Day",
         status = "white",
         solidHeader = TRUE,

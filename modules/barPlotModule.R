@@ -7,7 +7,7 @@ barPlotUI <- function(id) {
         title = " Predicted Sales by Day of the Week",
         status = "white",
         solidHeader = TRUE, 
-        plotlyOutput(ns("barPlot")),
+        plotlyOutput(ns("barPlot")) %>% withSpinner(type = 5),
         width = 12)
 }
 

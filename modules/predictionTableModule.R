@@ -8,7 +8,7 @@ predictionTableUI <- function(id) {
         status = "white",
         solidHeader = TRUE,
         width = 12,
-        DTOutput(ns("predictionsTable"))
+        DTOutput(ns("predictionsTable")) %>% withSpinner(type = 5)
       )
 }
 

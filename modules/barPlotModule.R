@@ -2,11 +2,13 @@
 
 barPlotUI <- function(id) {
   ns <- NS(id)
-      box(title = " Predicted Sales by Day of the Week",
-          status = "white",
-          solidHeader = TRUE, 
-          plotlyOutput(ns("barPlot")),
-          width = 12)
+      box(
+        class = "highlight-effect",
+        title = " Predicted Sales by Day of the Week",
+        status = "white",
+        solidHeader = TRUE, 
+        plotlyOutput(ns("barPlot")),
+        width = 12)
 }
 
 barPlotServer <- function(id, forecastData, forecastTypeReactive) {

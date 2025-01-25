@@ -13,7 +13,13 @@ valueBoxesModuleUI <- function(id) {
 # 2) Server portion: renders the three value boxes
 valueBoxesModuleServer <- function(id, forecastData, startDate, endDate, forecastTypeReactive) {
   moduleServer(id, function(input, output, session) {
-    
+
+    # Creating a reactive expression that waits for all necessary data
+    allDataReady <- reactive({
+      req(forecastData(), startDate(), endDate())
+      list(forecastData = forecastData(), startDate = startDate(), endDate = endDate())
+    })
+
     # 1) Total Sales
     output$totalSales <- renderValueBox({
       req(forecastData())
@@ -55,7 +61,7 @@ valueBoxesModuleServer <- function(id, forecastData, startDate, endDate, forecas
     
     # 3) Days Forecasted
     output$daysForecasted <- renderValueBox({
-      req(startDate(), endDate())
+      data <- allDataReady()
       days_count <- as.integer(difftime(endDate(), startDate(), units = "days")) + 1
       valueBox(
         value = paste(days_count, "Days"),

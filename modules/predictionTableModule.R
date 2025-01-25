@@ -3,6 +3,7 @@
 predictionTableUI <- function(id) {
   ns <- NS(id)
       bs4Card(
+        class = "highlight-effect",
         title = "Sales Prediction Table",
         status = "white",
         solidHeader = TRUE,

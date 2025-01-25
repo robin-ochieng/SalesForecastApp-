@@ -9,8 +9,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
 
       if (forecastTypeReactive() == FALSE) {
         # forecastTypeReactive() == FALSE => forecast "count"
-        daily_sales <- daily_sales %>%
-          mutate(Sales = SalesCount)
+        daily_sales <- daily_sales %>% mutate(Sales = SalesCount)
 
         # Also rename count_lag_i => sales_lag_i
         for (i in 1:31) {
@@ -58,7 +57,9 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
 
       # Train CatBoost (example)
       pool <- catboost.load_pool(data = X, label = y)
-      fit <- catboost.train(pool, NULL,
+      fit <- catboost.train(
+        learn_pool = pool,
+        test_pool  = NULL,
         params = list(
           loss_function = "RMSE",
           iterations    = 1000,
@@ -67,7 +68,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         )
       )
       fit
-    } else {
+    } else if (modelChoiceReactive() == "XGBoost") {
         # XGBoost pipeline
         fit <- xgboost::xgboost(
           data        = as.matrix(X),
@@ -79,8 +80,30 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           verbose     = 0
         )
         fit
+      } else if (modelChoiceReactive() == "LightGBM") {
+        # --- LightGBM
+        # 1) Create dataset
+        lgb_train <- lightgbm::lgb.Dataset(data = as.matrix(X), label = y)
+        # 2) Train model
+        fit <- lightgbm::lgb.train(
+          params = list(
+            objective = "regression",
+            learning_rate = 0.1,
+            num_leaves = 31  # typical default
+            # you can add more LightGBM params here
+          ),
+          data    = lgb_train,
+          nrounds = 1000,
+          verbose = 0
+        )
+        fit
+        
+      } else {
+        # Fallback if user didn't choose or typed something else
+        validate(need(FALSE, "Unsupported modelChoice selected."))
       }
     })
+    
 
     ################
     # 2) FORECAST/Prediction Step
@@ -165,9 +188,16 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         pool <- catboost.load_pool(data = future_data_final)
         preds <- catboost.predict(finalModel, pool)
         
-      } else {
-        # XGBoost
+      } else if (modelChoiceReactive() == "XGBoost") {
+        # xgboost predict
         preds <- predict(finalModel, as.matrix(future_data_final))
+        
+      } else if (modelChoiceReactive() == "LightGBM") {
+        # lightGBM predict
+        preds <- predict(finalModel, as.matrix(future_data_final))
+        
+      } else {
+        validate(need(FALSE, "Unsupported modelChoice in forecast step."))
       }
       
       # Return a data frame with a single final column name "PredictedSales"
@@ -181,3 +211,4 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
     return(forecastData)
   })
 }
+

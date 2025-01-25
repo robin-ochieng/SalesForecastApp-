@@ -14,6 +14,7 @@ library(xts)
 library(readxl)
 library(DT)
 library(plotly)
+library(shinycssloaders)
 library(shinyWidgets)
 
 source("modules/dataPreparationModule.R", local = TRUE)[1]
@@ -78,12 +79,11 @@ ui <- dashboardPage(
     # DROPDOWN for model selection
     selectInput(
       inputId  = "modelChoice",
-      label    = "Select Model:",
+      label    = "Select the Forecast Model:",
       choices  = c("CatBoost", "XGBoost", "LightGBM"),
       selected = "XGBoost"
     ), 
-    
-    tags$h6("Forecast Method:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"),
+    tags$h6("Forecast Sum or Count:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"),
     # SwitchButton for Forecast Type selection
     switchInput(
       inputId = "forecastType", 

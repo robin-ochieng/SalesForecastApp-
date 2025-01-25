@@ -5,8 +5,13 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
     # 1) Train XGBoost model once, using the daily_sales data from module 1
     model <- reactive({
       req(dailySalesReactive())
+      withProgress(message = "Training model...", value = 0, {
+        
+      incProgress(0.1, detail = "Fetching data...")      
       daily_sales <- dailySalesReactive()
 
+      # A) unify count vs. sum => rename to "Sales", rename lag columns => "sales_lag_i"
+      incProgress(0.2, detail = "Preparing columns...")
       if (forecastTypeReactive() == FALSE) {
         # forecastTypeReactive() == FALSE => forecast "count"
         daily_sales <- daily_sales %>% mutate(Sales = SalesCount)
@@ -40,6 +45,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
 
       # =============  B) SELECT the columns we actually want  =============
       # We'll keep "Sales" + time-based features + any "sales_lag_i" columns
+      incProgress(0.4, detail = "Building training matrix...")
       trainCols <- names(daily_sales)[
         grepl("^sales_lag_", names(daily_sales)) |        # all sales_lag_i
           names(daily_sales) %in% c("Sales", "year", "month", "day", "weekday", "quarter")
@@ -52,7 +58,8 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       X <- dplyr::select(trainDF, -Sales)
       y <- trainDF$Sales
 
-       # -- B) Check which model user chose
+       # -- C) Check which model user chose
+      incProgress(0.6, detail = paste("Fitting", modelChoiceReactive(), "..."))
       if (modelChoiceReactive() == "CatBoost") {     
 
       # Train CatBoost (example)
@@ -67,6 +74,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           learning_rate = 0.1
         )
       )
+      incProgress(0.9, detail = "CatBoost finished.")
       fit
     } else if (modelChoiceReactive() == "XGBoost") {
         # XGBoost pipeline
@@ -79,6 +87,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           eta         = 0.1,
           verbose     = 0
         )
+        incProgress(0.9, detail = "XGBoost finished.")
         fit
       } else if (modelChoiceReactive() == "LightGBM") {
         # --- LightGBM
@@ -96,12 +105,14 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           nrounds = 1000,
           verbose = 0
         )
+        incProgress(0.9, detail = "LightGBM finished.")
         fit
         
       } else {
         # Fallback if user didn't choose or typed something else
         validate(need(FALSE, "Unsupported modelChoice selected."))
       }
+      }) # end withProgress
     })
     
 
@@ -113,102 +124,115 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
     forecastData <- reactive({
       req(startDateReactive(), endDateReactive())
       
-      # A) Create future dates / Build skeleton for future_data 
-      future_dates <- seq(
-        from = as.Date(startDateReactive()),
-        to   = as.Date(endDateReactive()), 
-        by = "day")
-      
-      # Basic time-based features
-      future_data <- data.frame(
-        Date     = future_dates,
-        year     = lubridate::year(future_dates),
-        month    = lubridate::month(future_dates),
-        day      = lubridate::day(future_dates),
-        weekday  = lubridate::wday(future_dates),
-        quarter  = lubridate::quarter(future_dates)
-      )
-      
-      # B) Rename columns in daily_sales (same as training) 
-      daily_sales <- dailySalesReactive()
+      withProgress(message = "Generating forecast...", value = 0, {
 
-      #Count
-      if (forecastTypeReactive() == FALSE) {
-        daily_sales <- daily_sales %>%
-          mutate(Sales = SalesCount)
+        incProgress(0.1, detail = "Preparing future data...")
+        # A) Create future dates / Build skeleton for future_data 
+        future_dates <- seq(
+          from = as.Date(startDateReactive()),
+          to   = as.Date(endDateReactive()), 
+          by = "day")
+        
+        # Basic time-based features
+        future_data <- data.frame(
+          Date     = future_dates,
+          year     = lubridate::year(future_dates),
+          month    = lubridate::month(future_dates),
+          day      = lubridate::day(future_dates),
+          weekday  = lubridate::wday(future_dates),
+          quarter  = lubridate::quarter(future_dates)
+        )
+        
+        # B) Rename columns in daily_sales (same as training) 
+        incProgress(0.2, detail = "Renaming daily sales for forecast...")
+        daily_sales <- dailySalesReactive()
 
-        for (i in 1:31) {
-          old_col <- paste0("count_lag_", i)
-          new_col <- paste0("sales_lag_", i)
-          if (old_col %in% names(daily_sales)) {
-            daily_sales <- daily_sales %>%
-              rename(!!new_col := all_of(old_col))
+        #Count
+        if (forecastTypeReactive() == FALSE) {
+          daily_sales <- daily_sales %>%
+            mutate(Sales = SalesCount)
+
+          for (i in 1:31) {
+            old_col <- paste0("count_lag_", i)
+            new_col <- paste0("sales_lag_", i)
+            if (old_col %in% names(daily_sales)) {
+              daily_sales <- daily_sales %>%
+                rename(!!new_col := all_of(old_col))
+            }
+          }
+        } else {
+          #Sum
+          daily_sales <- daily_sales %>%
+            mutate(Sales = SalesSum)
+
+          for (i in 1:31) {
+            old_col <- paste0("sum_lag_", i)
+            new_col <- paste0("sales_lag_", i)
+            if (old_col %in% names(daily_sales)) {
+              daily_sales <- daily_sales %>%
+                rename(!!new_col := all_of(old_col))
+            }
           }
         }
-      } else {
-        #Sum
-        daily_sales <- daily_sales %>%
-          mutate(Sales = SalesSum)
-
+        # C) Fill future_data with "sales_lag_i" columns
+        incProgress(0.4, detail = "Adding lag columns to future data...")
+        nFutureDays <- length(future_dates)
+        # Create the same "sales_lag_i" columns (because we always call it "Sales")
         for (i in 1:31) {
-          old_col <- paste0("sum_lag_", i)
-          new_col <- paste0("sales_lag_", i)
-          if (old_col %in% names(daily_sales)) {
-            daily_sales <- daily_sales %>%
-              rename(!!new_col := all_of(old_col))
-          }
+          future_data[[paste0("sales_lag_", i)]] <-
+            tail(daily_sales$Sales, 31 + i - 1)[1:nFutureDays]
         }
-      }
-      # C) Fill future_data with "sales_lag_i" columns
-      nFutureDays <- length(future_dates)
-      # Create the same "sales_lag_i" columns (because we always call it "Sales")
-      for (i in 1:31) {
-        future_data[[paste0("sales_lag_", i)]] <-
-          tail(daily_sales$Sales, 31 + i - 1)[1:nFutureDays]
-      }
 
-      # =============  D) Keep the same columns we used for training (minus "Sales") =============
-      # Grab the training columns from the trained model, but we only have direct access to them
-      # if we saved them or re-generated them. So let's do the same approach here:
-      predCols <- names(daily_sales)[
-        grepl("^sales_lag_", names(daily_sales)) | 
-          names(daily_sales) %in% c("year", "month", "day", "weekday", "quarter")
-      ]
-      
-      # Then subset future_data (which we just created) to these columns
-      # We do NOT include "Sales" here because that's the target in training.
-      future_data_final <- future_data[, predCols, drop = FALSE]
-      
-      # E) Use whichever model is trained
-      finalModel <- model()
+        # =============  D) Keep the same columns we used for training (minus "Sales") =============
+        # Grab the training columns from the trained model, but we only have direct access to them
+        # if we saved them or re-generated them. So let's do the same approach here:
+        incProgress(0.6, detail = "Subsetting columns...")
+        predCols <- names(daily_sales)[
+          grepl("^sales_lag_", names(daily_sales)) | 
+            names(daily_sales) %in% c("year", "month", "day", "weekday", "quarter")
+        ]
+        
+        # Then subset future_data (which we just created) to these columns
+        # We do NOT include "Sales" here because that's the target in training.
+        future_data_final <- future_data[, predCols, drop = FALSE]
+        
+        # E) Use whichever model is trained
+        incProgress(0.7, detail = "Loading trained model...")
+        finalModel <- model()
 
-      # Predict
-      # If it's CatBoost
-      if (modelChoiceReactive() == "CatBoost") {
-        pool <- catboost.load_pool(data = future_data_final)
-        preds <- catboost.predict(finalModel, pool)
+        # Predict
+        # If it's CatBoost
+        incProgress(0.8, detail = "Predicting on new data...")
+        if (modelChoiceReactive() == "CatBoost") {
+          pool <- catboost.load_pool(data = future_data_final)
+          preds <- catboost.predict(finalModel, pool)
+          
+        } else if (modelChoiceReactive() == "XGBoost") {
+          # xgboost predict
+          preds <- predict(finalModel, as.matrix(future_data_final))
+          
+        } else if (modelChoiceReactive() == "LightGBM") {
+          # lightGBM predict
+          preds <- predict(finalModel, as.matrix(future_data_final))
+          
+        } else {
+          validate(need(FALSE, "Unsupported modelChoice in forecast step."))
+        }
         
-      } else if (modelChoiceReactive() == "XGBoost") {
-        # xgboost predict
-        preds <- predict(finalModel, as.matrix(future_data_final))
-        
-      } else if (modelChoiceReactive() == "LightGBM") {
-        # lightGBM predict
-        preds <- predict(finalModel, as.matrix(future_data_final))
-        
-      } else {
-        validate(need(FALSE, "Unsupported modelChoice in forecast step."))
-      }
+        # Return a data frame with a single final column name "PredictedSales"
+        incProgress(0.95, detail = "Finalizing forecast...")
+        df <- data.frame(
+          Date = future_dates,
+          PredictedSales = preds
+        )
+
+        incProgress(1, detail = "Done.")
+        df  
+        }) # end withProgress
+      })
       
-      # Return a data frame with a single final column name "PredictedSales"
-      data.frame(
-        Date = future_dates,
-        PredictedSales = preds
-      )
-    })
-    
-    # Return the forecast data as a reactive
-    return(forecastData)
+      # Return the forecast data as a reactive
+      return(forecastData)
   })
 }
 

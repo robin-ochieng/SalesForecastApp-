@@ -16,6 +16,10 @@ library(DT)
 library(plotly)
 library(shinycssloaders)
 library(shinyWidgets)
+library(glmnet)
+library(ranger)
+
+
 
 source("modules/dataPreparationModule.R", local = TRUE)[1]
 source("modules/forecastingModule.R", local = TRUE)[1]  
@@ -42,6 +46,7 @@ my_theme <- bs_theme(
 
 # Define the UI using bs4dash components
 ui <- dashboardPage(
+  title = "Sales Forecasting Model",
   freshTheme = my_theme,
   dark = NULL,
   help = NULL,
@@ -80,7 +85,7 @@ ui <- dashboardPage(
     selectInput(
       inputId  = "modelChoice",
       label    = "Select the Forecast Model:",
-      choices  = c("CatBoost", "XGBoost", "LightGBM"),
+      choices  = c("CatBoost", "XGBoost", "LightGBM", "RandomForest", "GLMNet"),
       selected = "XGBoost"
     ), 
     tags$h6("Forecast Sum or Count:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"),

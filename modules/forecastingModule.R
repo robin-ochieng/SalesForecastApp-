@@ -26,7 +26,6 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
               rename(!!new_col := all_of(old_col))
           }
         }  
-
       } else {
         # forecastTypeReactive() == TRUE => forecast "sum"
         daily_sales <- daily_sales %>%
@@ -60,8 +59,9 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
 
        # -- C) Check which model user chose
       incProgress(0.6, detail = paste("Fitting", modelChoiceReactive(), "..."))
-      if (modelChoiceReactive() == "CatBoost") {     
+      fit <- NULL
 
+      if (modelChoiceReactive() == "CatBoost") {     
       # Train CatBoost (example)
       pool <- catboost.load_pool(data = X, label = y)
       fit <- catboost.train(
@@ -75,7 +75,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         )
       )
       incProgress(0.9, detail = "CatBoost finished.")
-      fit
+    
     } else if (modelChoiceReactive() == "XGBoost") {
         # XGBoost pipeline
         fit <- xgboost::xgboost(
@@ -88,7 +88,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           verbose     = 0
         )
         incProgress(0.9, detail = "XGBoost finished.")
-        fit
+        
       } else if (modelChoiceReactive() == "LightGBM") {
         # --- LightGBM
         # 1) Create dataset
@@ -98,22 +98,52 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           params = list(
             objective = "regression",
             learning_rate = 0.1,
-            num_leaves = 31  # typical default
-            # you can add more LightGBM params here
+            num_leaves = 31 
           ),
           data    = lgb_train,
           nrounds = 1000,
           verbose = 0
         )
         incProgress(0.9, detail = "LightGBM finished.")
-        fit
         
-      } else {
-        # Fallback if user didn't choose or typed something else
-        validate(need(FALSE, "Unsupported modelChoice selected."))
-      }
+        
+      } else if (modelChoiceReactive() == "RandomForest") {
+          # -- RandomForest via ranger
+          # Make sure to install.packages("ranger") and library(ranger)
+          incProgress(0.7, detail = "RandomForest in progress...")
+          # We can combine X, y into a single data.frame, as ranger uses a formula or data approach:
+          df_rf <- cbind(X, Sales = y)
+          fit <- ranger::ranger(
+            Sales ~ .,
+            data       = df_rf,
+            num.trees  = 500,    # e.g. 500 trees
+            mtry       = floor(sqrt(ncol(X))),  # typical default
+            importance = "impurity"
+          )
+          incProgress(0.9, detail = "RandomForest finished.")
+          
+        } else if (modelChoiceReactive() == "GLMNet") {
+          # -- GLMNet
+          # Make sure to install.packages("glmnet") and library(glmnet)
+          incProgress(0.7, detail = "Fitting GLMNet (Elastic Net)...")
+          fit <- glmnet::glmnet(
+            x     = as.matrix(X),
+            y     = y,
+            alpha = 0.5,     # 0.5 = halfway between ridge/lasso
+            family = "gaussian"
+          )
+          # Optionally you can do cross-validation with cv.glmnet
+          incProgress(0.9, detail = "GLMNet finished.")
+          
+        } else {
+          validate(need(FALSE, "Unsupported modelChoice selected."))
+        }
+
+        incProgress(1, detail = "Done.")
+        fit
       }) # end withProgress
     })
+    
     
 
     ################
@@ -129,8 +159,8 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         incProgress(0.1, detail = "Preparing future data...")
         # A) Create future dates / Build skeleton for future_data 
         future_dates <- seq(
-          from = as.Date(startDateReactive()),
-          to   = as.Date(endDateReactive()), 
+          as.Date(startDateReactive()),
+          as.Date(endDateReactive()), 
           by = "day")
         
         # Basic time-based features
@@ -203,6 +233,9 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         # Predict
         # If it's CatBoost
         incProgress(0.8, detail = "Predicting on new data...")
+        preds <- NULL
+
+
         if (modelChoiceReactive() == "CatBoost") {
           pool <- catboost.load_pool(data = future_data_final)
           preds <- catboost.predict(finalModel, pool)
@@ -215,9 +248,20 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           # lightGBM predict
           preds <- predict(finalModel, as.matrix(future_data_final))
           
+        } else if (modelChoiceReactive() == "RandomForest") {
+          # ranger predict
+          preds <- predict(finalModel, data = future_data_final)$predictions
+          
+        } else if (modelChoiceReactive() == "GLMNet") {
+
+          bestLambda <- tail(finalModel$lambda, 1)
+          preds <- predict(finalModel, newx = as.matrix(future_data_final), s = bestLambda)
+          preds <- as.numeric(preds)
+          
         } else {
           validate(need(FALSE, "Unsupported modelChoice in forecast step."))
         }
+
         
         # Return a data frame with a single final column name "PredictedSales"
         incProgress(0.95, detail = "Finalizing forecast...")

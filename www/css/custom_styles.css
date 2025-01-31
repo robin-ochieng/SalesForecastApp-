@@ -141,7 +141,7 @@ body {
 .menu-container {
     display: block; /* Align items to the start of the container */
     position: fixed; /* Ensure the container is positioned correctly */    
-    top: 150px;  /* Aligns to the top of the viewport */
+    top: 130px;  /* Aligns to the top of the viewport */
     left: 0; 
     width: 250px; /* Match the width of the sidebar-footer */
     padding: 10px 5px; /* Add padding to give some space around the title */
@@ -214,12 +214,15 @@ body {
 }
 .highlight-effect {
   transition: box-shadow 0.3s ease, border 0.3s ease;
+  border-top: 0;
 }
 .highlight-effect:hover {
   border: 1px solid #0137A6 !important;  /* a highlight color */
+  border-top: none !important; 
   box-shadow: 0 0 10px rgba(1, 55, 166, 0.5);
   cursor: pointer;
 }
+
 
 
 /* Example: change the background color of the tooltip */
@@ -262,8 +265,30 @@ body {
     cursor: pointer;
   }
 
+  /* CSS for the hamburger icon */
+  .hamburger-icon {
+    display: none; /* Hidden by default */
+    cursor: pointer;
+    font-size: 30px; /* Large size for better visibility */
+    position: fixed; /* Keeps the icon in a specific position */
+    top: 10px; /* Distance from the top */
+    left: 10px; /* Distance from the left */
+    z-index: 1051; /* Ensures it appears above other content */
+  }
 
 
+
+
+/* Hide the .menu-container on smaller screens */
+@media (max-width: 768px) {
+  .hamburger-icon {
+      display: block; /* Show icon */
+  }
+
+  .menu-container {
+      display: none; /* This will hide the menu-container on screens smaller than 768px */
+  }
+}
 
 
 

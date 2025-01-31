@@ -19,21 +19,21 @@ barPlotServer <- function(id, forecastData, forecastTypeReactive) {
       forecast <- forecastData() %>%
         mutate(DayOfWeek = weekdays(Date)) %>%
         group_by(DayOfWeek) %>%
-        summarise(Sales = sum(PredictedSales))
+        summarise(AverageSales = mean(PredictedSales))
       
             # Decide y-axis label
       yAxisTitle <- if (forecastTypeReactive() == FALSE) {
-        "Sales Count"
+        "Average Sales Count"
       } else {
-        "Sales Sum"
+        "Average Sales Value"
       }
 
       plot_ly(
         forecast,
         x = ~DayOfWeek, 
-        y = ~Sales, 
+        y = ~AverageSales, 
         type = 'bar',
-        text = ~paste(scales::comma(Sales, accuracy = 1)),
+        text = ~paste(scales::comma(AverageSales, accuracy = 1)),
         textposition = 'outside',
         hoverinfo = 'text',
         textfont = list(size = 9, color = "black"),

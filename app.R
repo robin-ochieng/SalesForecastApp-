@@ -173,7 +173,6 @@ server <- function(input, output, session) {
     forecastData = forecastDataRV,
     forecastTypeReactive = reactive({ input$forecastType })
   )
-
 }
 
 shinyApp(ui, server)

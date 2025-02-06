@@ -29,6 +29,7 @@ source("modules/dataPreparationModule.R", local = TRUE)
 source("modules/linePlotModule.R", local = TRUE)  
 source("modules/barPlotModule.R", local = TRUE)
 source("modules/predictionTableModule.R", local = TRUE)
+source("modules/accuracyModule.R", local = TRUE)[1]
 
 # Define a custom theme using bslib
 my_theme <- bs_theme(
@@ -93,7 +94,7 @@ ui <- dashboardPage(
     switchInput(
       inputId = "forecastType", 
       label = NULL, 
-      value = FALSE, 
+      value = TRUE, 
       onLabel = "Sum", 
       offLabel = "Count", 
       onStatus = "gray-dark", 
@@ -125,7 +126,11 @@ ui <- dashboardPage(
     ),
     fluidRow(
       barPlotUI("barPlot_id")
-    )
+    ),
+    fluidRow(
+      accuracyModuleUI("accuracy_id")
+),
+
   ),
   #controlbar = dashboardControlbar(), # Optional, add if needed
   footer = dashboardFooter()
@@ -173,6 +178,13 @@ server <- function(input, output, session) {
     forecastData = forecastDataRV,
     forecastTypeReactive = reactive({ input$forecastType })
   )
+
+  accuracyModuleServer(
+  id                  = "accuracy_id",
+  dailySalesReactive  = dailySalesRV,   # Your actual daily sales data
+  forecastDataReactive= forecastDataRV  # The forecasted data
+)
+
 }
 
 shinyApp(ui, server)

@@ -1,0 +1,12 @@
+name: PredictiveAnalyticsModel
+title: PredictiveAnalyticsModel
+username: robtech
+account: robtech
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14364818
+bundleId: 10018328
+url: https://robtech.shinyapps.io/PredictiveAnalyticsModel/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

@@ -21,8 +21,6 @@ library(shinyWidgets)
 library(glmnet)
 library(ranger)
 
-
-
 source("modules/dataPreparationModule.R", local = TRUE)[1]
 source("modules/forecastingModule.R", local = TRUE)[1]  
 source("modules/functions.R", local = TRUE)[1] 

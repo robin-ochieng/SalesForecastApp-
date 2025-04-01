@@ -61,21 +61,20 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
       incProgress(0.6, detail = paste("Fitting", modelChoiceReactive(), "..."))
       fit <- NULL
 
-      if (modelChoiceReactive() == "CatBoost") {     
-      # Train CatBoost (example)
-      pool <- catboost.load_pool(data = X, label = y)
-      fit <- catboost.train(
-        learn_pool = pool,
-        test_pool  = NULL,
-        params = list(
-          loss_function = "RMSE",
-          iterations    = 1000,
-          depth         = 5,
-          learning_rate = 0.1
-        )
-      )
-      incProgress(0.9, detail = "CatBoost finished.")
-    
+      if (modelChoiceReactive() == "GBM") {  
+        # Train GBM
+        fit <- gbm::gbm(
+          formula = Sales ~ .,
+          data = trainDF,
+          distribution = "gaussian",
+          n.trees = 1000,
+          interaction.depth = 5,
+          shrinkage = 0.1,
+          bag.fraction = 0.5,
+          cv.folds = 5,
+          verbose = FALSE
+        )  
+        incProgress(0.9, detail = "GBM finished.")    
     } else if (modelChoiceReactive() == "XGBoost") {
         # XGBoost pipeline
         fit <- xgboost::xgboost(
@@ -179,8 +178,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
 
         #Count
         if (forecastTypeReactive() == FALSE) {
-          daily_sales <- daily_sales %>%
-            mutate(Sales = SalesCount)
+          daily_sales <- daily_sales %>% mutate(Sales = SalesCount)
 
           for (i in 1:31) {
             old_col <- paste0("count_lag_", i)
@@ -192,9 +190,7 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
           }
         } else {
           #Sum
-          daily_sales <- daily_sales %>%
-            mutate(Sales = SalesSum)
-
+          daily_sales <- daily_sales %>% mutate(Sales = SalesSum)
           for (i in 1:31) {
             old_col <- paste0("sum_lag_", i)
             new_col <- paste0("sales_lag_", i)
@@ -230,16 +226,15 @@ modForecastServer <- function(id, dailySalesReactive, startDateReactive, endDate
         incProgress(0.7, detail = "Loading trained model...")
         finalModel <- model()
 
-        # Predict
-        # If it's CatBoost
+        # F) Predict on future_data_final
         incProgress(0.8, detail = "Predicting on new data...")
         preds <- NULL
 
 
-        if (modelChoiceReactive() == "CatBoost") {
-          pool <- catboost.load_pool(data = future_data_final)
-          preds <- catboost.predict(finalModel, pool)
-          
+        if (modelChoiceReactive() == "GBM") {
+          # gbm predict
+          preds <- predict(finalModel, newdata = future_data_final, n.trees = 1000)
+
         } else if (modelChoiceReactive() == "XGBoost") {
           # xgboost predict
           preds <- predict(finalModel, as.matrix(future_data_final))

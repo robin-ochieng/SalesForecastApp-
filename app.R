@@ -1,10 +1,12 @@
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 library(shiny)
 library(bs4Dash)
 library(bslib)
 library(tidyverse)
 library(lubridate)
 library(readr)
-library(catboost)
+library(gbm)
+library(randomForest)
 library(xgboost)
 library(lightgbm)
 library(caret)
@@ -29,7 +31,6 @@ source("modules/dataPreparationModule.R", local = TRUE)
 source("modules/linePlotModule.R", local = TRUE)  
 source("modules/barPlotModule.R", local = TRUE)
 source("modules/predictionTableModule.R", local = TRUE)
-source("modules/accuracyModule.R", local = TRUE)[1]
 
 # Define a custom theme using bslib
 my_theme <- bs_theme(
@@ -47,7 +48,7 @@ my_theme <- bs_theme(
 
 # Define the UI using bs4dash components
 ui <- dashboardPage(
-  title = "Sales Forecasting Model",
+  title = "Predictive Analytics Model",
   freshTheme = my_theme,
   dark = NULL,
   help = NULL,
@@ -63,7 +64,7 @@ ui <- dashboardPage(
     title = dashboardBrand(
       title = tags$div(
         class = "text-center header-title-container",
-        tags$h4("Sales Forecasting Model", class = "header-title")
+        tags$h4("Predictive Analytics Model", class = "header-title")
       ),
       color = "white"
     ),
@@ -86,8 +87,8 @@ ui <- dashboardPage(
     selectInput(
       inputId  = "modelChoice",
       label    = "Select the Forecast Model:",
-      choices  = c("CatBoost", "XGBoost", "LightGBM", "RandomForest", "GLMNet"),
-      selected = "XGBoost"
+      choices  = c("GBM", "XGBoost", "LightGBM", "RandomForest", "GLMNet"),
+      selected = "RandomForest"
     ), 
     tags$h6("Forecast Sum or Count:", style = "padding-left: 20px;  font-weight: bold; margin-top: 20px;"),
     # SwitchButton for Forecast Type selection
@@ -126,11 +127,7 @@ ui <- dashboardPage(
     ),
     fluidRow(
       barPlotUI("barPlot_id")
-    ),
-    fluidRow(
-      accuracyModuleUI("accuracy_id")
-),
-
+    )
   ),
   #controlbar = dashboardControlbar(), # Optional, add if needed
   footer = dashboardFooter()
@@ -140,6 +137,17 @@ server <- function(input, output, session) {
 
   # 1) Get the daily_sales from the data prep module
   dailySalesRV <- modDataPrepServer("dataPrep")
+
+  # Observe the dailySalesRV to update the start and end dates
+  observe({
+    req(dailySalesRV())  # Ensures the data is loaded before proceeding
+    # Extract the last date from dailySalesRV
+    last_date <- max(dailySalesRV()$Date, na.rm = TRUE)
+    start_date <- last_date + days(1)
+    updateDateInput(session, "startDate", value = start_date, min = start_date)
+    updateDateInput(session, "endDate", value = start_date + days(7), min = start_date)
+  })
+  
   
   # 2) Generate the forecast data from the forecasting module
   forecastDataRV <- modForecastServer(
@@ -178,12 +186,6 @@ server <- function(input, output, session) {
     forecastData = forecastDataRV,
     forecastTypeReactive = reactive({ input$forecastType })
   )
-
-  accuracyModuleServer(
-  id                  = "accuracy_id",
-  dailySalesReactive  = dailySalesRV,   # Your actual daily sales data
-  forecastDataReactive= forecastDataRV  # The forecasted data
-)
 
 }
 
